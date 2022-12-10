@@ -1,4 +1,4 @@
-package part1recap
+package part1intro
 
 // Almost everything in Cats is exposed as a type class
 // it's a programming pattern to enhance a type with some form of capability
