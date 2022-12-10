@@ -61,7 +61,8 @@ object TCVariance {
   // or 2:
   // - you have the benefit of picking the most specific TC - which is our case for the coveriant TC
 
-//  Option[2] === Option.empty[Int]
+
+  Option(2) === Option.empty[Int]
 
   // Cats uses INVARIANT TCs
   def main(args: Array[String]): Unit = {
@@ -75,6 +76,6 @@ object TCVariance {
      *  println(organizeShow[Animal])
      */
 
-    Option[2] === Option.empty[Int]
+
   }
 }
