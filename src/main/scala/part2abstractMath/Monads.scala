@@ -52,6 +52,8 @@ object Monads {
   trait MyMonad[M[_]] {
     def pure[A](value: A): M[A]
     def flatMap[A, B](ma: M[A])(f: A => M[B]): M[B]
+    def map[A, B](ma: M[A])(f: A => B): M[B] =
+      flatMap(ma)(x => pure(f(x)))
   }
 
   // Cats Monad
@@ -92,6 +94,55 @@ object Monads {
   def getPairs[M[_], A, B](ma: M[A], mb: M[B])(implicit monad: Monad[M]): M[(A, B)] =
     monad.flatMap(ma)(a => monad.map(mb)(b => (a, b)))
 
+  // extension methods - weirder imports - pure, flatMap
+  import cats.syntax.applicative._ // pure is here
+  val oneOption = 1.pure[Option] // implicit Monad[Option] will be used => Some(1)
+  val oneList = 1.pure[List] // List(1)
+
+  import cats.syntax.flatMap._ // flatMap is here
+  val oneOptionTransformed = oneOption.flatMap(x => (x + 1).pure[Option])
+
+  // TODO 3: implement map method in MyMonad - has the same signature of the Functor map
+  // Monads extend Functors
+  val oneOptionMap = Monad[Option].map(Option(2))(_ + 2)
+  import cats.syntax.functor._ // map is here
+  val oneOptionMapped = oneOption.map(_ + 2)
+  // for-comprehensions
+  val composedOptionFor = for {
+    one <- 1.pure[Option]
+    two <- 2.pure[Option]
+  } yield one + two
+
+  // TODO 4: implement a shorter version of getPairs using for-comprehensions
+  def getPairsShorter[M[_], A, B](ma: M[A], mb: M[B])(implicit monad: Monad[M]): M[(A, B)] = {
+//    monad.flatMap(ma)(a => monad.map(mb)(b => (a, b)))
+    for {
+      a <- ma
+      b <- mb
+    } yield (a, b)
+    // identical tothe chain ma.flatMap(a => mb.flatmap(b => (a, b)))
+    // because:
+    // Instead of using monad.flatMap(ma) we use
+    // extension method on monad: ma.flatMap()
+    // Also, I have access to map extension method from cat.syntax.functor:
+    // So I'll use mb.map(b => (a, b)) instead of monad.map(mb)(b => (a, b))
+//    ma.flatMap(a => mb.map(b => (a, b))) // identical to what we have on Line 12
+//    And this can be reduced to for-comprehension as seen above
+  }
+
+  //  val combinationOption = numberOption.flatMap(no => charOption.map(co => (no, co)))
+//  val combinationOptionFor = for {
+//    n <- numberOption
+//    c <- charOption
+//  } yield (n, c)
+
+  def getPairsShortest[M[_]: Monad, A, B](ma: M[A], mb: M[B]): M[(A, B)] = {
+    for {
+      a <- ma
+      b <- mb
+    } yield (a, b)
+  }
+
   def main(args: Array[String]): Unit = {
     println(combinationsListFor)
     println(combinationsList)
@@ -111,9 +162,12 @@ object Monads {
     println(aTransformedFuture)
 
     println("Using monads: ")
-    println(getPairs(numbersList, charsList))
-    println(getPairs(numberOption, charOption))
-//    println(getPairs(numberFuture, charFuture))
+    println(getPairsShorter(numbersList, charsList))
+    println(getPairsShorter(numberOption, charOption))
+//    println(getPairsShorter(numberFuture, charFuture))
     getPairs(numberFuture, charFuture).foreach(println)
+
+    println("For-comprehension: ")
+    println(getPairsShortest(numbersList, charsList))
   }
 }
